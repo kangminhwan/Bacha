@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>바샤커피 메뉴판</title>
+  <meta name="description" content="바샤커피 메뉴를 빠르게 검색/필터/정렬할 수 있는 깔끔한 단일 페이지" />
+  <style>
+    :root{
+      --bg: #0b0c0f;
+      --card: #151821;
+      --muted: #a7b0c0;
+      --text: #e6eaf2;
+      --brand: #ffb703;
+      --brand-2: #ff7a59;
+      --ring: 0 0 0 3px rgba(255,183,3,.25);
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f4f6fb;
+        --card: #ffffff;
+        --muted: #5a6577;
+        --text: #0b0c0f;
+        --brand: #e18f00;
+        --brand-2: #e85d3f;
+        --ring: 0 0 0 3px rgba(225,143,0,.20);
+        --shadow: 0 10px 25px rgba(0,0,0,.08);
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Apple SD Gothic Neo, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(255,183,3,.10), transparent 60%), var(--bg);
+      color:var(--text);
+    }
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    header{
+      position:sticky; top:0; z-index:10; backdrop-filter:saturate(180%) blur(8px);
+      background:linear-gradient( to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+    }
+    .header-inner{display:flex;gap:16px;align-items:center; justify-content:space-between; padding:16px 24px}
+    .brand{display:flex;align-items:center; gap:12px}
+    .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2)); box-shadow: var(--shadow)}
+    .title{font-size: clamp(18px, 2.2vw, 28px); font-weight:800; letter-spacing:.2px}
+    .actions{display:flex; gap:8px; align-items:center}
+    .btn{
+      border:1px solid transparent; background:var(--card); color:var(--text); padding:10px 14px; border-radius:12px;
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer; box-shadow: var(--shadow);
+    }
+    .btn:hover{border-color: rgba(255,255,255,.2)}
+    .btn:focus-visible{outline:none; box-shadow: var(--ring)}
+    .toggle{display:inline-flex; align-items:center; gap:8px}
+
+    .controls{margin:18px 0; display:flex; flex-wrap:wrap; gap:10px}
+    .search{
+      flex:1 1 320px; display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid rgba(255,255,255,.08);
+      padding:10px 12px; border-radius:14px; box-shadow: var(--shadow)
+    }
+    .search input{flex:1; background:transparent; border:none; outline:none; color:var(--text)}
+    .chipbar{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:var(--card); cursor:pointer; font-size:14px}
+    .chip.active{border-color: var(--brand); box-shadow: var(--ring)}
+    .sort{margin-left:auto; min-width:180px; background:var(--card); border:1px solid rgba(255,255,255,.08); padding:10px 12px; border-radius:12px}
+
+    .grid{display:grid; grid-template-columns: repeat( auto-fill,minmax(240px,1fr) ); gap:16px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0) 30%), var(--card);
+      border:1px solid rgba(255,255,255,.08); border-radius:18px; box-shadow: var(--shadow); overflow:hidden; display:flex; flex-direction:column
+    }
+    .thumb{height:150px; background:#0e1118 center/cover no-repeat}
+    .meta{padding:14px 14px 10px}
+    .name{font-weight:700}
+    .desc{color:var(--muted); font-size:14px; line-height:1.45; margin-top:6px}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px}
+    .price{font-weight:800}
+    .pill{font-size:12px; padding:6px 8px; background:rgba(255,183,3,.12); color:#ffde8a; border:1px solid rgba(255,183,3,.2); border-radius:999px}
+    .fav{background:transparent; border:none; cursor:pointer; font-size:18px}
+    .fav.active{filter: drop-shadow(0 0 6px rgba(255,183,3,.8))}
+
+    .empty{padding:40px; text-align:center; color:var(--muted)}
+    footer{padding:40px 0 80px; text-align:center; color:var(--muted)}
+    .small{font-size:12px; color:var(--muted)}
+    .notice{margin-top:8px; font-size:12px; color:var(--muted)}
+
+    /* Tooltip */
+    [data-tip]{position:relative}
+    [data-tip]:hover::after{
+      content: attr(data-tip); position:absolute; bottom: calc(100% + 8px); left:50%; transform: translateX(-50%);
+      background: #000; color:#fff; font-size:12px; padding:6px 8px; border-radius:6px; white-space:nowrap; box-shadow: var(--shadow)
+    }
+
+    /* Simple dark-mode toggle override class */
+    .light{--bg:#f4f6fb; --card:#fff; --muted:#5a6577; --text:#0b0c0f; --brand:#e18f00; --brand-2:#e85d3f; --ring:0 0 0 3px rgba(225,143,0,.20); --shadow:0 10px 25px rgba(0,0,0,.08)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner container">
+      <div class="brand">
+        <div class="logo" aria-hidden></div>
+        <div>
+          <div class="title">바샤커피 메뉴판</div>
+          <div class="small" aria-label="tagline">Bacha Coffee — (비공식, 샘플 데이터)</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="toggleTheme" class="btn toggle" data-tip="라이트/다크 전환"><span>🌓</span><span>테마</span></button>
+        <button id="showFavs" class="btn" data-tip="즐겨찾기만 보기"><span>⭐</span><span>즐겨찾기</span></button>
+      </div>
+    </div>
+    <div class="container">
+      <div class="controls">
+        <div class="search" role="search">
+          <span aria-hidden>🔎</span>
+          <input id="q" type="search" placeholder="메뉴 검색: 예) 콜드브루, 바닐라, 디카페인" aria-label="메뉴 검색" />
+        </div>
+        <div class="chipbar" id="chips" role="tablist" aria-label="카테고리 탭"></div>
+        <select id="sort" class="sort" aria-label="정렬">
+          <option value="rec">추천순</option>
+          <option value="priceAsc">가격 낮은순</option>
+          <option value="priceDesc">가격 높은순</option>
+          <option value="nameAsc">이름 오름차순</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="empty" class="empty" hidden>조건에 맞는 메뉴가 없어요. 필터를 변경해 보세요.</div>
+    <p class="notice">※ 이 페이지는 GitHub Pages 데모용이며 실제 매장 가격/구성은 지점·시기에 따라 다를 수 있어요.</p>
+  </main>
+
+  <footer>
+    <div class="container small">© 2025 Demo Menu. Not affiliated with Bacha Coffee. For personal portfolio/demo use.</div>
+  </footer>
+
+  <script>
+    // ===== 샘플 메뉴 데이터 =====
+    /**
+     * 실제 운영 시, 아래 데이터를 별도 JSON으로 분리해도 됩니다.
+     * 필드: id, category, name, desc, price (KRW), tags[], image
+     */
+    const menuData = [
+      { id:1, category:"시그니처 커피", name:"바샤 하우스 블렌드 핫", desc:"미디엄 로스트, 견과류와 카라멜 향.", price: 9800, tags:["핫","블렌드"], image:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1200&auto=format&fit=crop" },
+      { id:2, category:"시그니처 커피", name:"바샤 하우스 블렌드 아이스", desc:"차가운 아이스 커피 – 균형 잡힌 산미.", price: 10500, tags:["아이스","블렌드"], image:"https://images.unsplash.com/photo-1481391032119-d89fee407e44?q=80&w=1200&auto=format&fit=crop" },
+      { id:3, category:"싱글 오리진", name:"에티오피아 예가체프", desc:"플로럴 아로마와 라이트 바디.", price: 13800, tags:["싱글","플로럴"], image:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?q=80&w=1200&auto=format&fit=crop" },
+      { id:4, category:"싱글 오리진", name:"케냐 AA", desc:"진한 바디와 시트러스 피니시.", price: 14200, tags:["싱글","시트러스"], image:"https://images.unsplash.com/photo-1503480207415-fdddcc21d833?q=80&w=1200&auto=format&fit=crop" },
+      { id:5, category:"콜드브루", name:"클래식 콜드브루", desc:"장시간 추출로 부드러운 단맛.", price: 11500, tags:["콜드브루"], image:"https://images.unsplash.com/photo-1586953208270-767889fa9bf8?q=80&w=1200&auto=format&fit=crop" },
+      { id:6, category:"콜드브루", name:"바닐라 콜드브루", desc:"진한 바닐라 빈 시럽을 더한 달콤함.", price: 12500, tags:["콜드브루","바닐라"], image:"https://images.unsplash.com/photo-1561883088-039e53143d73?q=80&w=1200&auto=format&fit=crop" },
+      { id:7, category:"스페셜티 라떼", name:"카라멜 라떼", desc:"카라멜 소스와 크리미한 우유.", price: 11800, tags:["라떼","카라멜"], image:"https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=1200&auto=format&fit=crop" },
+      { id:8, category:"스페셜티 라떼", name:"바닐라 빈 라떼", desc:"마다가스카르 바닐라 향.", price: 11800, tags:["라떼","바닐라"], image:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?q=80&w=1200&auto=format&fit=crop" },
+      { id:9, category:"디카페인", name:"디카페인 아메리카노", desc:"카페인 부담 없이 깔끔하게.", price: 9800, tags:["디카페인"], image:"https://images.unsplash.com/photo-1519332978332-21b7d3b38e84?q=80&w=1200&auto=format&fit=crop" },
+      { id:10, category:"디저트", name:"오렌지 마들렌", desc:"버터 향과 상큼한 오렌지 제스트.", price: 5200, tags:["페이스트리"], image:"https://images.unsplash.com/photo-1575827339337-4c1b7166b82b?q=80&w=1200&auto=format&fit=crop" },
+      { id:11, category:"디저트", name:"버터 스콘", desc:"겉바속촉 클래식 스콘.", price: 4800, tags:["스콘"], image:"https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=1200&auto=format&fit=crop" },
+      { id:12, category:"티 & 기타", name:"얼그레이", desc:"베르가못 향의 클래식 티.", price: 7200, tags:["티"], image:"https://images.unsplash.com/photo-1470337458703-46ad1756a187?q=80&w=1200&auto=format&fit=crop" },
+      { id:13, category:"티 & 기타", name:"레몬 스파클링", desc:"상큼한 레몬 에이드.", price: 7800, tags:["에이드"], image:"https://images.unsplash.com/photo-1560472355-536de3962603?q=80&w=1200&auto=format&fit=crop" },
+    ];
+
+    // ===== 상태 =====
+    const state = {
+      category: '전체',
+      q: '',
+      sort: 'rec',
+      favOnly: false,
+      favs: new Set(JSON.parse(localStorage.getItem('favs')||'[]')),
+      theme: localStorage.getItem('theme') || 'auto' // 'auto' | 'light'
+    };
+
+    const elGrid = document.getElementById('grid');
+    const elEmpty = document.getElementById('empty');
+    const elChips = document.getElementById('chips');
+    const elQ = document.getElementById('q');
+    const elSort = document.getElementById('sort');
+
+    // ===== 테마 토글 =====
+    function applyTheme(){
+      if(state.theme==='light') document.body.classList.add('light');
+      else document.body.classList.remove('light');
+    }
+    document.getElementById('toggleTheme').addEventListener('click',()=>{
+      state.theme = state.theme==='light' ? 'auto' : 'light';
+      localStorage.setItem('theme', state.theme);
+      applyTheme();
+    });
+    applyTheme();
+
+    // ===== 카테고리 칩 생성 =====
+    const categories = ['전체', ...Array.from(new Set(menuData.map(m=>m.category)))];
+    function renderChips(){
+      elChips.innerHTML = '';
+      categories.forEach(cat=>{
+        const b = document.createElement('button');
+        b.className = 'chip' + (state.category===cat ? ' active' : '');
+        b.textContent = cat;
+        b.role = 'tab';
+        b.addEventListener('click',()=>{ state.category = cat; render(); });
+        elChips.appendChild(b);
+      })
+    }
+
+    // ===== 포맷터 =====
+    const krw = new Intl.NumberFormat('ko-KR', { style:'currency', currency:'KRW' });
+
+    // ===== 렌더러 =====
+    function render(){
+      // 필터
+      let items = menuData.filter(it=>{
+        if(state.category!=='전체' && it.category!==state.category) return false;
+        if(state.favOnly && !state.favs.has(it.id)) return false;
+        const q = state.q.trim().toLowerCase();
+        if(q){
+          const hay = [it.name, it.desc, it.category, ...(it.tags||[])].join(' ').toLowerCase();
+          if(!hay.includes(q)) return false;
+        }
+        return true;
+      });
+      // 정렬
+      items.sort((a,b)=>{
+        switch(state.sort){
+          case 'priceAsc': return a.price - b.price;
+          case 'priceDesc': return b.price - a.price;
+          case 'nameAsc': return a.name.localeCompare(b.name, 'ko');
+          default: return a.id - b.id; // 추천순(기본)
+        }
+      });
+
+      // 렌더
+      elGrid.innerHTML = '';
+      if(items.length===0){ elEmpty.hidden=false; return; } else { elEmpty.hidden=true; }
+
+      for(const it of items){
+        const card = document.createElement('article');
+        card.className = 'card'; card.tabIndex = 0;
+        card.innerHTML = `
+          <div class="thumb" style="background-image:url('${it.image}')" role="img" aria-label="${it.name}"></div>
+          <div class="meta">
+            <div class="pill">${it.category}</div>
+            <div class="name">${it.name}</div>
+            <div class="desc">${it.desc}</div>
+            <div class="row">
+              <div class="price">${krw.format(it.price)}</div>
+              <button class="fav ${state.favs.has(it.id)?'active':''}" aria-label="즐겨찾기" data-id="${it.id}">⭐</button>
+            </div>
+          </div>
+        `;
+        elGrid.appendChild(card);
+      }
+
+      // 즐겨찾기 이벤트 바인딩
+      elGrid.querySelectorAll('.fav').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const id = Number(e.currentTarget.dataset.id);
+          if(state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
+          localStorage.setItem('favs', JSON.stringify(Array.from(state.favs)));
+          render();
+        });
+      })
+    }
+
+    // ===== 이벤트 =====
+    elQ.addEventListener('input', (e)=>{ state.q = e.target.value; render(); });
+    elSort.addEventListener('change', (e)=>{ state.sort = e.target.value; render(); });
+    document.getElementById('showFavs').addEventListener('click', ()=>{ state.favOnly = !state.favOnly; render(); });
+
+    // 초기화
+    renderChips();
+    render();
+  </script>
+</body>
+</html>
