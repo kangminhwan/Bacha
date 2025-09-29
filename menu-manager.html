@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>바샤커피 메뉴판 - TXT 파일 관리 시스템</title>
+  <meta name="description" content="menu.txt 파일 기반 메뉴 관리 시스템" />
+  <style>
+    :root{
+      --bg: #0b0c0f;
+      --card: #151821;
+      --muted: #a7b0c0;
+      --text: #e6eaf2;
+      --brand: #ffb703;
+      --brand-2: #ff7a59;
+      --ring: 0 0 0 3px rgba(255,183,3,.25);
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f4f6fb;
+        --card: #ffffff;
+        --muted: #5a6577;
+        --text: #0b0c0f;
+        --brand: #e18f00;
+        --brand-2: #e85d3f;
+        --ring: 0 0 0 3px rgba(225,143,0,.20);
+        --shadow: 0 10px 25px rgba(0,0,0,.08);
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Apple SD Gothic Neo, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(255,183,3,.10), transparent 60%), var(--bg);
+      color:var(--text);
+    }
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    header{
+      position:sticky; top:0; z-index:10; backdrop-filter:saturate(180%) blur(8px);
+      background:linear-gradient( to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+    }
+    .header-inner{display:flex;gap:16px;align-items:center; justify-content:space-between; padding:16px 24px}
+    .brand{display:flex;align-items:center; gap:12px}
+    .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2)); box-shadow: var(--shadow)}
+    .title{font-size: clamp(18px, 2.2vw, 28px); font-weight:800; letter-spacing:.2px}
+    .actions{display:flex; gap:8px; align-items:center}
+    .btn{
+      border:1px solid transparent; background:var(--card); color:var(--text); padding:10px 14px; border-radius:12px;
+      display:inline-flex; align-items:center; gap:8px; cursor:pointer; box-shadow: var(--shadow);
+    }
+    .btn:hover{border-color: rgba(255,255,255,.2)}
+    .btn:focus-visible{outline:none; box-shadow: var(--ring)}
+    .toggle{display:inline-flex; align-items:center; gap:8px}
+
+    .controls{margin:18px 0; display:flex; flex-wrap:wrap; gap:10px}
+    .search{
+      flex:1 1 320px; display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid rgba(255,255,255,.08);
+      padding:10px 12px; border-radius:14px; box-shadow: var(--shadow)
+    }
+    .search input{flex:1; background:transparent; border:none; outline:none; color:var(--text)}
+    .chipbar{display:flex; gap:8px; flex-wrap:wrap}
+    .chip{padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:var(--card); cursor:pointer; font-size:14px}
+    .chip.active{border-color: var(--brand); box-shadow: var(--ring)}
+    .sort{margin-left:auto; min-width:180px; background:var(--card); border:1px solid rgba(255,255,255,.08); padding:10px 12px; border-radius:12px}
+
+    .grid{display:grid; grid-template-columns: repeat( auto-fill,minmax(240px,1fr) ); gap:16px}
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0) 30%), var(--card);
+      border:1px solid rgba(255,255,255,.08); border-radius:18px; box-shadow: var(--shadow); overflow:hidden; display:flex; flex-direction:column
+    }
+    .thumb{height:150px; background:#0e1118 center/cover no-repeat; position:relative}
+    .thumb::after{content:'📷'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; opacity:0.3}
+    .meta{padding:14px 14px 10px}
+    .name{font-weight:700}
+    .desc{color:var(--muted); font-size:14px; line-height:1.45; margin-top:6px}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px}
+    .price{font-weight:800}
+    .pill{font-size:12px; padding:6px 8px; background:rgba(255,183,3,.12); color:#ffde8a; border:1px solid rgba(255,183,3,.2); border-radius:999px}
+    .fav{background:transparent; border:none; cursor:pointer; font-size:18px}
+    .fav.active{filter: drop-shadow(0 0 6px rgba(255,183,3,.8))}
+    .txt-badge{font-size:10px; padding:2px 6px; background:rgba(16,185,129,.12); color:#10b981; border:1px solid rgba(16,185,129,.2); border-radius:999px; margin-left:auto}
+
+    .empty{padding:40px; text-align:center; color:var(--muted)}
+    .loading{padding:40px; text-align:center; color:var(--muted)}
+    .error{padding:20px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:8px; margin-bottom:16px; color:var(--error)}
+    .warning{padding:12px; background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); border-radius:8px; margin-bottom:16px; color:var(--warning)}
+    .success{padding:12px; background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.3); border-radius:8px; margin-bottom:16px; color:var(--success)}
+    
+    footer{padding:40px 0 80px; text-align:center; color:var(--muted)}
+    .small{font-size:12px; color:var(--muted)}
+    .notice{margin-top:8px; font-size:12px; color:var(--muted)}
+    .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px}
+    .stat-card{background:var(--card); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.08)}
+    .stat-title{font-size:12px; color:var(--muted); margin-bottom:4px}
+    .stat-value{font-weight:700; font-size:18px}
+
+    /* Tooltip */
+    [data-tip]{position:relative}
+    [data-tip]:hover::after{
+      content: attr(data-tip); position:absolute; bottom: calc(100% + 8px); left:50%; transform: translateX(-50%);
+      background: #000; color:#fff; font-size:12px; padding:6px 8px; border-radius:6px; white-space:nowrap; box-shadow: var(--shadow)
+    }
+
+    /* Simple dark-mode toggle override class */
+    .light{--bg:#f4f6fb; --card:#fff; --muted:#5a6577; --text:#0b0c0f; --brand:#e18f00; --brand-2:#e85d3f; --ring:0 0 0 3px rgba(225,143,0,.20); --shadow:0 10px 25px rgba(0,0,0,.08)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner container">
+      <div class="brand">
+        <div class="logo" aria-hidden></div>
+        <div>
+          <div class="title">바샤커피 메뉴판</div>
+          <div class="small" aria-label="tagline">Bacha Coffee — TXT 파일 관리 시스템</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="toggleTheme" class="btn toggle" data-tip="라이트/다크 전환"><span>🌓</span><span>테마</span></button>
+        <button id="refreshMenu" class="btn" data-tip="메뉴 새로고침"><span>🔄</span><span>새로고침</span></button>
+        <button id="showFavs" class="btn" data-tip="즐겨찾기만 보기"><span>⭐</span><span>즐겨찾기</span></button>
+      </div>
+    </div>
+    <div class="container">
+      <div class="success">
+        <strong>📝 TXT 파일 관리 시스템:</strong> menu.txt 파일을 수정하면 자동으로 메뉴가 업데이트됩니다!
+      </div>
+      
+      <div id="stats" class="stats" style="display:none;"></div>
+      <div id="warnings"></div>
+      <div id="errors"></div>
+      
+      <div class="controls">
+        <div class="search" role="search">
+          <span aria-hidden>🔎</span>
+          <input id="q" type="search" placeholder="메뉴 검색: 예) 스콘, 샌드위치, 케이크" aria-label="메뉴 검색" />
+        </div>
+        <div class="chipbar" id="chips" role="tablist" aria-label="카테고리 탭"></div>
+        <select id="sort" class="sort" aria-label="정렬">
+          <option value="rec">추천순</option>
+          <option value="priceAsc">가격 낮은순</option>
+          <option value="priceDesc">가격 높은순</option>
+          <option value="nameAsc">이름 오름차순</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="loading" class="loading">메뉴를 불러오는 중...</div>
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="empty" class="empty" hidden>조건에 맞는 메뉴가 없어요. 필터를 변경해 보세요.</div>
+    <p class="notice">※ 메뉴는 menu.txt 파일을 기반으로 생성됩니다. 파일을 수정하고 새로고침하면 즉시 반영됩니다.</p>
+  </main>
+
+  <footer>
+    <div class="container small">© 2025 Bacha Coffee TXT Menu System. 텍스트 파일 기반 메뉴 관리 시스템.</div>
+  </footer>
+
+  <script>
+    // ===== 상태 =====
+    const state = {
+      category: '전체',
+      q: '',
+      sort: 'rec',
+      favOnly: false,
+      favs: new Set(JSON.parse(localStorage.getItem('favs')||'[]')),
+      theme: localStorage.getItem('theme') || 'auto',
+      menuData: [],
+      stats: null,
+      warnings: []
+    };
+
+    const elGrid = document.getElementById('grid');
+    const elEmpty = document.getElementById('empty');
+    const elLoading = document.getElementById('loading');
+    const elChips = document.getElementById('chips');
+    const elQ = document.getElementById('q');
+    const elSort = document.getElementById('sort');
+    const elStats = document.getElementById('stats');
+    const elWarnings = document.getElementById('warnings');
+    const elErrors = document.getElementById('errors');
+
+    // ===== TXT 파일 기반 메뉴 로드 =====
+    async function loadMenuFromTxt() {
+      try {
+        const response = await fetch('./api/load-menu.php');
+        const result = await response.json();
+        
+        if (result.success) {
+          state.stats = result.stats;
+          state.warnings = result.warnings || {};
+          displayStats();
+          displayWarnings();
+          return result.data;
+        } else {
+          throw new Error(result.error || '메뉴 데이터를 불러올 수 없습니다.');
+        }
+      } catch (error) {
+        console.error('TXT API 호출 실패:', error);
+        displayError('menu.txt 파일을 읽을 수 없습니다. PHP 서버를 확인해주세요.');
+        
+        // 폴백: 로컬 샘플 데이터
+        return getFallbackData();
+      }
+    }
+
+    // ===== 통계 표시 =====
+    function displayStats() {
+      if (!state.stats) return;
+      
+      const stats = state.stats;
+      elStats.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-title">총 메뉴 수</div>
+          <div class="stat-value">${stats.total_items}개</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">카테고리 수</div>
+          <div class="stat-value">${Object.keys(stats.categories).length}개</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">가격 범위</div>
+          <div class="stat-value">${stats.price_range.min.toLocaleString()}원 ~ ${stats.price_range.max.toLocaleString()}원</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">평균 가격</div>
+          <div class="stat-value">${stats.price_range.avg.toLocaleString()}원</div>
+        </div>
+      `;
+      elStats.style.display = 'grid';
+    }
+
+    // ===== 경고 표시 =====
+    function displayWarnings() {
+      elWarnings.innerHTML = '';
+      
+      if (state.warnings.missing_images && state.warnings.missing_images.length > 0) {
+        const missingList = state.warnings.missing_images.map(item => 
+          `<li>${item.menu} (${item.image}) - 라인 ${item.line}</li>`
+        ).join('');
+        
+        elWarnings.innerHTML = `
+          <div class="warning">
+            <strong>⚠️ 누락된 이미지 파일들:</strong>
+            <ul style="margin:8px 0 0 20px; font-size:12px;">${missingList}</ul>
+            <div style="margin-top:8px; font-size:12px;">해당 이미지 파일들을 images/ 폴더에 추가해주세요.</div>
+          </div>
+        `;
+      }
+    }
+
+    // ===== 오류 표시 =====
+    function displayError(message) {
+      elErrors.innerHTML = `
+        <div class="error">
+          <strong>❌ 오류:</strong> ${message}
+        </div>
+      `;
+    }
+
+    // ===== 폴백 데이터 =====
+    function getFallbackData() {
+      return [
+        {
+          id: 1,
+          category: "Housemade Pastries",
+          name: "오렌지 마들렌",
+          desc: "버터 향과 상큼한 오렌지 제스트",
+          price: 5200,
+          image: "./images/housemade-pastries/madeleine-orange.jpg",
+          tags: ["페이스트리", "오렌지"],
+          source: "fallback"
+        }
+      ];
+    }
+
+    // ===== 테마 토글 =====
+    function applyTheme(){
+      if(state.theme==='light') document.body.classList.add('light');
+      else document.body.classList.remove('light');
+    }
+    document.getElementById('toggleTheme').addEventListener('click',()=>{
+      state.theme = state.theme==='light' ? 'auto' : 'light';
+      localStorage.setItem('theme', state.theme);
+      applyTheme();
+    });
+    applyTheme();
+
+    // ===== 카테고리 칩 생성 =====
+    function renderChips(){
+      const categories = ['전체', ...Array.from(new Set(state.menuData.map(m=>m.category)))];
+      elChips.innerHTML = '';
+      categories.forEach(cat=>{
+        const b = document.createElement('button');
+        b.className = 'chip' + (state.category===cat ? ' active' : '');
+        b.textContent = cat;
+        b.role = 'tab';
+        b.addEventListener('click',()=>{ state.category = cat; render(); });
+        elChips.appendChild(b);
+      })
+    }
+
+    // ===== 포맷터 =====
+    const krw = new Intl.NumberFormat('ko-KR', { style:'currency', currency:'KRW' });
+
+    // ===== 렌더러 =====
+    function render(){
+      elLoading.style.display = 'none';
+      
+      // 필터
+      let items = state.menuData.filter(it=>{
+        if(state.category!=='전체' && it.category!==state.category) return false;
+        if(state.favOnly && !state.favs.has(it.id)) return false;
+        const q = state.q.trim().toLowerCase();
+        if(q){
+          const hay = [it.name, it.desc, it.category, ...(it.tags||[])].join(' ').toLowerCase();
+          if(!hay.includes(q)) return false;
+        }
+        return true;
+      });
+      
+      // 정렬
+      items.sort((a,b)=>{
+        switch(state.sort){
+          case 'priceAsc': return a.price - b.price;
+          case 'priceDesc': return b.price - a.price;
+          case 'nameAsc': return a.name.localeCompare(b.name, 'ko');
+          default: return a.id - b.id; // 추천순(기본)
+        }
+      });
+
+      // 렌더
+      elGrid.innerHTML = '';
+      if(items.length===0){ elEmpty.hidden=false; return; } else { elEmpty.hidden=true; }
+
+      for(const it of items){
+        const card = document.createElement('article');
+        card.className = 'card'; card.tabIndex = 0;
+        
+        const tags = (it.tags||[]).map(tag => `<span class="txt-badge">${tag}</span>`).join(' ');
+        const sourceIndicator = it.source === 'txt_file' ? '<span class="txt-badge">TXT</span>' : '';
+        
+        card.innerHTML = `
+          <div class="thumb" style="background-image:url('${it.image}')" role="img" aria-label="${it.name}"></div>
+          <div class="meta">
+            <div style="display:flex; gap:4px; align-items:center; margin-bottom:8px;">
+              <div class="pill">${it.category}</div>
+              ${sourceIndicator}
+            </div>
+            <div class="name">${it.name}</div>
+            <div class="desc">${it.desc}</div>
+            ${tags ? `<div style="margin-top:8px;">${tags}</div>` : ''}
+            <div class="row">
+              <div class="price">${krw.format(it.price)}</div>
+              <button class="fav ${state.favs.has(it.id)?'active':''}" aria-label="즐겨찾기" data-id="${it.id}">⭐</button>
+            </div>
+          </div>
+        `;
+        elGrid.appendChild(card);
+      }
+
+      // 즐겨찾기 이벤트 바인딩
+      elGrid.querySelectorAll('.fav').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const id = Number(e.currentTarget.dataset.id);
+          if(state.favs.has(id)) state.favs.delete(id); else state.favs.add(id);
+          localStorage.setItem('favs', JSON.stringify(Array.from(state.favs)));
+          render();
+        });
+      })
+    }
+
+    // ===== 메뉴 로드 =====
+    async function loadMenu() {
+      elLoading.style.display = 'block';
+      elErrors.innerHTML = '';
+      elWarnings.innerHTML = '';
+      
+      try {
+        state.menuData = await loadMenuFromTxt();
+        renderChips();
+        render();
+      } catch (error) {
+        console.error('메뉴 로드 실패:', error);
+        displayError('메뉴 로드에 실패했습니다. 새로고침 버튼을 눌러주세요.');
+        elLoading.innerHTML = '메뉴 로드에 실패했습니다.';
+      }
+    }
+
+    // ===== 이벤트 =====
+    elQ.addEventListener('input', (e)=>{ state.q = e.target.value; render(); });
+    elSort.addEventListener('change', (e)=>{ state.sort = e.target.value; render(); });
+    document.getElementById('showFavs').addEventListener('click', ()=>{ state.favOnly = !state.favOnly; render(); });
+    document.getElementById('refreshMenu').addEventListener('click', loadMenu);
+
+    // 초기화
+    loadMenu();
+  </script>
+</body>
+</html>

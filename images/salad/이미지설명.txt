@@ -1,0 +1,15 @@
+📁 Salad (샐러드)
+
+이 폴더에 넣을 이미지:
+- 시저 샐러드
+- 그린 샐러드
+- 퀴노아 샐러드
+- 니코이즈 샐러드
+- 치킨 샐러드
+
+파일명 예시:
+- caesar-salad.jpg
+- green-salad.jpg
+- quinoa-salad.jpg
+- nicoise-salad.jpg
+- chicken-salad.jpg

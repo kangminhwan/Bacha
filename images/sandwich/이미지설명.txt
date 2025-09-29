@@ -1,0 +1,14 @@
+📁 Sandwich (샌드위치)
+
+이 폴더에 넣을 이미지:
+- 클럽 샌드위치
+- BLT 샌드위치
+- 크로크 무슈
+- 파니니
+- 바게트 샌드위치
+
+파일명 예시:
+- club-sandwich.jpg
+- blt-sandwich.jpg
+- croque-monsieur.jpg
+- panini-ham-cheese.jpg

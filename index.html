@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title id="pageTitle">바샤커피 메뉴판</title>
+  <style>
+    :root{
+      --bg: #0b0c0f; --card: #151821; --muted: #a7b0c0; --text: #e6eaf2;
+      --brand: #ffb703; --brand-2: #ff7a59; --ring: 0 0 0 3px rgba(255,183,3,.25);
+      --shadow: 0 10px 30px rgba(0,0,0,.25); --success: #10b981; --warning: #f59e0b; --error: #ef4444;
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f4f6fb; --card: #ffffff; --muted: #5a6577; --text: #0b0c0f;
+        --brand: #e18f00; --brand-2: #e85d3f; --ring: 0 0 0 3px rgba(225,143,0,.20);
+        --shadow: 0 10px 25px rgba(0,0,0,.08);
+      }
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(255,183,3,.10), transparent 60%), var(--bg);
+      color:var(--text);
+    }
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    header{position:sticky; top:0; z-index:10; backdrop-filter:saturate(180%) blur(8px);}
+    .header-inner{display:flex;gap:16px;align-items:center; justify-content:space-between; padding:16px 24px}
+    .brand{display:flex;align-items:center; gap:12px}
+    .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));}
+    .title{font-size: clamp(18px, 2.2vw, 28px); font-weight:800;}
+    .actions{display:flex; gap:8px; align-items:center}
+    .search{padding:8px 12px; border:1px solid rgba(255,255,255,.1); border-radius:8px; background:var(--card); color:var(--text);}
+    .lang-toggle{background:var(--brand); color:var(--bg); border:none; padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:600; transition:all .2s}
+    .lang-toggle:hover{background:var(--brand-2); transform:translateY(-1px)}
+    .filter-tabs{display:flex; gap:8px; margin:16px 0; flex-wrap:wrap}
+    .tab{padding:8px 16px; border:1px solid rgba(255,255,255,.1); border-radius:20px; background:var(--card); color:white; cursor:pointer; transition:all .2s}
+    .tab.active{background:var(--brand); color:var(--bg)}
+    .menu-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:20px; margin-top:24px}
+    .menu-item{background:var(--card); border-radius:12px; overflow:hidden; transition:transform .2s; border:1px solid rgba(255,255,255,.05)}
+    .menu-item:hover{transform:translateY(-2px)}
+    .item-image{width:100%; height:200px; object-fit:cover; background:#333}
+    .item-content{padding:16px}
+    .item-name{font-size:16px; font-weight:600; margin-bottom:8px}
+    .item-description{color:var(--muted); font-size:14px; margin-bottom:12px; line-height:1.4}
+    .item-footer{display:flex; justify-content:space-between; align-items:center}
+    .item-price{font-weight:700; color:var(--brand); font-size:16px}
+    .item-category{font-size:12px; color:var(--muted); background:rgba(255,255,255,.05); padding:4px 8px; border-radius:4px}
+    .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin:24px 0}
+    .stat-card{background:var(--card); padding:16px; border-radius:8px; text-align:center}
+    .stat-number{font-size:24px; font-weight:700; color:var(--brand)}
+    .stat-label{color:var(--muted); font-size:14px; margin-top:4px}
+    .update-info{background:var(--success); color:white; padding:12px; border-radius:8px; margin:16px 0; text-align:center}
+    .loading{text-align:center; padding:40px; color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-inner">
+        <div class="brand">
+          <div class="logo"></div>
+          <h1 class="title" id="mainTitle">바샤커피 메뉴판</h1>
+        </div>
+        <div class="actions">
+          <input type="text" class="search" placeholder="메뉴 검색..." id="searchInput">
+          <button class="lang-toggle" id="langToggle" onclick="toggleLanguage()">English</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="filter-tabs" id="filterTabs">
+        <button class="tab active" data-category="all" id="allTab">전체</button>
+      </div>
+
+      <div class="menu-grid" id="menuGrid">
+        <div class="loading">메뉴를 불러오는 중...</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentLanguage = 'ko';
+    let menuDataKo = [];
+    let menuDataEn = [];
+    let currentCategory = 'all';
+
+    // 메뉴 데이터 (한국어)
+    const menuTextKo = `# 바샤커피 메뉴 관리 파일
+# 형식: 카테고리|이름|설명|가격|이미지파일명|태그(옵션)
+# 주석은 #으로 시작
+
+# === Housemade Pastries ===
+Housemade Pastries|라즈베리 바닐라 앙트르메|라즈베리와 바닐라의 조화로운 프렌치 디저트|12000|housemade-pastries/바샤청담_라즈베리바닐라앙트르메.jpg|라즈베리,바닐라,프렌치
+Housemade Pastries|레몬 타르트|상큼한 레몬과 바삭한 타르트의 조합|9800|housemade-pastries/바샤청담_레몬타르트.jpg|레몬,타르트
+Housemade Pastries|밀푀유|바삭한 퍼프 페이스트리 층층이 쌓인 클래식 디저트|11500|housemade-pastries/바샤청담_밀푀유.jpg|밀푀유,퍼프페이스트리
+Housemade Pastries|블랙펄 커피 오페라|진한 커피 맛이 일품인 오페라 케이크|13800|housemade-pastries/바샤청담_블랙펄커피오페라.jpg|커피,오페라케이크
+Housemade Pastries|자허토르테|오스트리아 전통 초콜릿 케이크|12500|housemade-pastries/바샤청담_자허토르테.jpg|초콜릿,자허토르테
+Housemade Pastries|키비라 레인 앙트르메|키비라 커피와 레인의 환상적인 조합|14000|housemade-pastries/바샤청담_키비라레인앙트르메.jpg|키비라,레인,앙트르메
+
+# === Sandwich ===
+Sandwich|바샤 클럽 샌드위치|바샤커피 시그니처 클럽 샌드위치|15000|sandwich/바샤청담_바샤클럽샌드위치.jpg|클럽샌드위치,시그니처
+Sandwich|치킨 프렌치 토스트 샌드위치|부드러운 프렌치 토스트와 치킨의 조합|16500|sandwich/바샤청담_치킨프렌치토스트샌드위치.jpg|치킨,프렌치토스트
+Sandwich|한우 채끝 프렌치 토스트 샌드위치|프리미엄 한우 채끝과 프렌치 토스트|28000|sandwich/바샤청담_한우채끝프렌치토스트샌드위치.jpg|한우,채끝,프렌치토스트,프리미엄
+
+# === Ice Desserts ===
+Ice Desserts|소르베 아이스크림|시원하고 상큼한 수제 소르베|10000|ice-desserts/바샤청담_소르베아이스크림.jpg|소르베,아이스크림
+
+# === Farm Fresh Eggs ===
+Farm Fresh Eggs|스크램블 에그와 블랙 트러플|블랙 트러플이 올라간 고급 스크램블 에그|32000|farm-fresh-eggs/바샤청담_스크램블에그와블랙트러플.jpg|스크램블에그,블랙트러플,프리미엄
+Farm Fresh Eggs|에그 프라이와 홈메이드 비프 콩피|농장 직송 달걀과 정성스럽게 조리한 비프 콩피|28000|farm-fresh-eggs/바샤청담_에그프라이와홈메이드비프콩피.jpg|달걀,비프콩피,프리미엄
+Farm Fresh Eggs|프랑스식 오믈렛|정통 프랑스 스타일의 부드러운 오믈렛|18000|farm-fresh-eggs/바샤청담_프랑스식오믈렛.jpg|오믈렛,프랑스식
+
+# === Main ===
+Main|모로칸 케프타 미트볼|모로코 전통 향신료로 만든 미트볼|22000|main/바샤청담_모로칸케프타미트볼.jpg|모로칸,미트볼,향신료
+Main|자타르 크러스트 연어|중동 향신료 자타르로 구운 연어|26000|main/바샤청담_자타르크러스트연어.jpg|연어,자타르,크러스트
+Main|전복 리조또|신선한 전복이 들어간 크리미한 리조또|28000|main/바샤청담_전복리조또.jpg|전복,리조또,프리미엄
+Main|치킨 탈리아텔레|부드러운 치킨과 탈리아텔레 파스타|19500|main/바샤청담_치킨탈리아텔레.jpg|치킨,탈리아텔레,파스타
+Main|한우 안심|최고급 한우 안심 스테이크|45000|main/바샤청담_한우안심.jpg|한우,안심,스테이크,프리미엄
+
+# === Croissants and Cakes ===
+Croissants and Cakes|라즈베리 시나몬 크루아상|라즈베리와 시나몬의 달콤한 조합|8500|croissants-and-cakes/바샤청담_라즈베리시나몬크루아상.jpg|크루아상,라즈베리,시나몬
+Croissants and Cakes|레몬 케이크|상큼한 레몬 향이 가득한 케이크|9500|croissants-and-cakes/바샤청담_레몬케이크.jpg|케이크,레몬
+Croissants and Cakes|마블 케이크|커피와 바닐라의 마블 패턴 케이크|9900|croissants-and-cakes/바샤청담_마블케이크.jpg|케이크,마블,커피
+Croissants and Cakes|버터 크루아상|황금빛 버터가 가득한 정통 크루아상|5200|croissants-and-cakes/바샤청담_버터크루아상.jpg|크루아상,버터
+Croissants and Cakes|브리오쉬 페이테|프랑스 전통 브리오쉬|7500|croissants-and-cakes/바샤청담_브리오쉬페이테.jpg|브리오쉬,프랑스
+Croissants and Cakes|솔티드 캐러멜 크루아상|달콤짭짤한 솔티드 캐러멜 크루아상|8800|croissants-and-cakes/바샤청담_솔티드캐러멜크루아상.jpg|크루아상,솔티드캐러멜
+Croissants and Cakes|아몬드 크루아상|고소한 아몬드가 듬뿍 들어간 크루아상|7800|croissants-and-cakes/바샤청담_아몬드크루아상.jpg|크루아상,아몬드
+Croissants and Cakes|초코 크루아상|진한 초콜릿이 들어간 크루아상|7200|croissants-and-cakes/바샤청담_초코크루아상.jpg|크루아상,초콜릿
+Croissants and Cakes|초콜릿 피스타치오 케이크|초콜릿과 피스타치오의 고급스러운 조합|14500|croissants-and-cakes/바샤청담_초콜렛피스타치오케이크.jpg|케이크,초콜릿,피스타치오
+Croissants and Cakes|카페 라틴 초콜릿 키비라 레인 커피|진한 커피와 초콜릿의 환상적인 조합|12000|croissants-and-cakes/바샤청담_카페라틴초콜렛키비라레인커피.jpg|커피,초콜릿,키비라
+Croissants and Cakes|크루아상 콩테 치즈|고급 콩테 치즈와 크루아상의 조합|12500|croissants-and-cakes/바샤청담_크루아상콩테치즈.jpg|크루아상,콩테치즈
+Croissants and Cakes|크루아상 트러플 버섯|트러플 버섯이 들어간 고급 크루아상|15000|croissants-and-cakes/바샤청담_크루아상트러플버섯.jpg|크루아상,트러플,버섯,프리미엄
+Croissants and Cakes|피스타치오 크루아상|고급 피스타치오가 들어간 크루아상|9200|croissants-and-cakes/바샤청담_피스타치오크루아상.jpg|크루아상,피스타치오
+
+# === Salad ===
+Salad|니스식 바샤 샐러드|참치와 올리브, 삶은 달걀이 들어간 프렌치 샐러드|24000|salad/바샤청담_니스식바샤샐러드.jpg|샐러드,니스식,참치,프렌치
+Salad|마라케시 스파이스 치킨 샐러드|모로코 향신료로 양념한 치킨 샐러드|19500|salad/바샤청담_마라케시스파이스치킨샐러드.jpg|샐러드,치킨,마라케시,스파이스
+
+# === Our Signature Dessert ===
+Our Signature Dessert|브래드와 버터 푸딩|따뜻한 브래드 푸딩과 버터의 조합|11500|signature-dessert/바샤청담_브래드와버터푸딩.jpg|브래드푸딩,버터,시그니처
+Our Signature Dessert|티라미수|바샤커피만의 특별한 레시피로 만든 티라미수|13500|signature-dessert/바샤청담_티라미수.jpg|티라미수,시그니처
+Our Signature Dessert|홈메이드 추로스|갓 튀겨낸 바삭한 홈메이드 추로스|9800|signature-dessert/바샤청담_홈메이드추로스.jpg|추로스,홈메이드,시그니처`;
+
+    // 메뉴 데이터 (영어)
+    const menuTextEn = `# Bacha Coffee Menu Management File (English)
+# Format: Category|Name|Description|Price|ImageFile|Tags(Optional)
+# Comments start with #
+
+# === Housemade Pastries ===
+Housemade Pastries|Raspberry Vanilla Entremets|Harmonious French dessert with raspberry and vanilla|12000|housemade-pastries/바샤청담_라즈베리바닐라앙트르메.jpg|raspberry,vanilla,french
+Housemade Pastries|Lemon Tart|Refreshing lemon with crispy tart combination|9800|housemade-pastries/바샤청담_레몬타르트.jpg|lemon,tart
+Housemade Pastries|Mille-feuille|Classic dessert with layers of crispy puff pastry|11500|housemade-pastries/바샤청담_밀푀유.jpg|mille-feuille,puff pastry
+Housemade Pastries|Black Pearl Coffee Opera|Opera cake with rich coffee flavor|13800|housemade-pastries/바샤청담_블랙펄커피오페라.jpg|coffee,opera cake
+Housemade Pastries|Sachertorte|Traditional Austrian chocolate cake|12500|housemade-pastries/바샤청담_자허토르테.jpg|chocolate,sachertorte
+Housemade Pastries|Kivila Rain Entremets|Fantastic combination of Kivila coffee and rain|14000|housemade-pastries/바샤청담_키비라레인앙트르메.jpg|kivila,rain,entremets
+
+# === Sandwich ===
+Sandwich|Bacha Club Sandwich|Bacha Coffee signature club sandwich|15000|sandwich/바샤청담_바샤클럽샌드위치.jpg|club sandwich,signature
+Sandwich|Chicken French Toast Sandwich|Soft French toast with chicken combination|16500|sandwich/바샤청담_치킨프렌치토스트샌드위치.jpg|chicken,french toast
+Sandwich|Korean Beef Sirloin French Toast Sandwich|Premium Korean beef sirloin with French toast|28000|sandwich/바샤청담_한우채끝프렌치토스트샌드위치.jpg|korean beef,sirloin,french toast,premium
+
+# === Ice Desserts ===
+Ice Desserts|Sorbet Ice Cream|Cool and refreshing handmade sorbet|10000|ice-desserts/바샤청담_소르베아이스크림.jpg|sorbet,ice cream
+
+# === Farm Fresh Eggs ===
+Farm Fresh Eggs|Scrambled Eggs with Black Truffle|Premium scrambled eggs topped with black truffle|32000|farm-fresh-eggs/바샤청담_스크램블에그와블랙트러플.jpg|scrambled eggs,black truffle,premium
+Farm Fresh Eggs|Fried Eggs with Homemade Beef Confit|Farm-fresh eggs with carefully prepared beef confit|28000|farm-fresh-eggs/바샤청담_에그프라이와홈메이드비프콩피.jpg|eggs,beef confit,premium
+Farm Fresh Eggs|French-style Omelet|Authentic French-style fluffy omelet|18000|farm-fresh-eggs/바샤청담_프랑스식오믈렛.jpg|omelet,french style
+
+# === Main ===
+Main|Moroccan Kefta Meatballs|Traditional Moroccan spiced meatballs|22000|main/바샤청담_모로칸케프타미트볼.jpg|moroccan,meatballs,spices
+Main|Za'atar Crusted Salmon|Salmon grilled with Middle Eastern za'atar spices|26000|main/바샤청담_자타르크러스트연어.jpg|salmon,zaatar,crusted
+Main|Abalone Risotto|Creamy risotto with fresh abalone|28000|main/바샤청담_전복리조또.jpg|abalone,risotto,premium
+Main|Chicken Tagliatelle|Tender chicken with tagliatelle pasta|19500|main/바샤청담_치킨탈리아텔레.jpg|chicken,tagliatelle,pasta
+Main|Korean Beef Tenderloin|Premium Korean beef tenderloin steak|45000|main/바샤청담_한우안심.jpg|korean beef,tenderloin,steak,premium
+
+# === Croissants and Cakes ===
+Croissants and Cakes|Raspberry Cinnamon Croissant|Sweet combination of raspberry and cinnamon|8500|croissants-and-cakes/바샤청담_라즈베리시나몬크루아상.jpg|croissant,raspberry,cinnamon
+Croissants and Cakes|Lemon Cake|Cake filled with refreshing lemon flavor|9500|croissants-and-cakes/바샤청담_레몬케이크.jpg|cake,lemon
+Croissants and Cakes|Marble Cake|Marble pattern cake with coffee and vanilla|9900|croissants-and-cakes/바샤청담_마블케이크.jpg|cake,marble,coffee
+Croissants and Cakes|Butter Croissant|Authentic croissant filled with golden butter|5200|croissants-and-cakes/바샤청담_버터크루아상.jpg|croissant,butter
+Croissants and Cakes|Brioche Feuilletée|Traditional French brioche|7500|croissants-and-cakes/바샤청담_브리오쉬페이테.jpg|brioche,french
+Croissants and Cakes|Salted Caramel Croissant|Sweet and salty salted caramel croissant|8800|croissants-and-cakes/바샤청담_솔티드캐러멜크루아상.jpg|croissant,salted caramel
+Croissants and Cakes|Almond Croissant|Croissant filled with plenty of savory almonds|7800|croissants-and-cakes/바샤청담_아몬드크루아상.jpg|croissant,almond
+Croissants and Cakes|Chocolate Croissant|Croissant with rich chocolate|7200|croissants-and-cakes/바샤청담_초코크루아상.jpg|croissant,chocolate
+Croissants and Cakes|Chocolate Pistachio Cake|Luxurious combination of chocolate and pistachio|14500|croissants-and-cakes/바샤청담_초콜렛피스타치오케이크.jpg|cake,chocolate,pistachio
+Croissants and Cakes|Café Latin Chocolate Kivila Rain Coffee|Fantastic combination of rich coffee and chocolate|12000|croissants-and-cakes/바샤청담_카페라틴초콜렛키비라레인커피.jpg|coffee,chocolate,kivila
+Croissants and Cakes|Croissant with Comté Cheese|Combination of premium Comté cheese and croissant|12500|croissants-and-cakes/바샤청담_크루아상콩테치즈.jpg|croissant,comte cheese
+Croissants and Cakes|Croissant with Truffle Mushroom|Premium croissant with truffle mushroom|15000|croissants-and-cakes/바샤청담_크루아상트러플버섯.jpg|croissant,truffle,mushroom,premium
+Croissants and Cakes|Pistachio Croissant|Croissant with premium pistachio|9200|croissants-and-cakes/바샤청담_피스타치오크루아상.jpg|croissant,pistachio
+
+# === Salad ===
+Salad|Bacha Niçoise Salad|French salad with tuna, olives, and boiled eggs|24000|salad/바샤청담_니스식바샤샐러드.jpg|salad,nicoise,tuna,french
+Salad|Marrakech Spice Chicken Salad|Chicken salad seasoned with Moroccan spices|19500|salad/바샤청담_마라케시스파이스치킨샐러드.jpg|salad,chicken,marrakech,spices
+
+# === Our Signature Dessert ===
+Our Signature Dessert|Bread and Butter Pudding|Warm bread pudding with butter combination|11500|signature-dessert/바샤청담_브래드와버터푸딩.jpg|bread pudding,butter,signature
+Our Signature Dessert|Tiramisu|Special tiramisu made with Bacha Coffee's unique recipe|13500|signature-dessert/바샤청담_티라미수.jpg|tiramisu,signature
+Our Signature Dessert|Homemade Churros|Freshly fried crispy homemade churros|9800|signature-dessert/바샤청담_홈메이드추로스.jpg|churros,homemade,signature`;
+
+    // 언어별 UI 텍스트
+    const uiText = {
+      ko: {
+        title: '바샤커피 메뉴판',
+        langButton: 'English',
+        searchPlaceholder: '메뉴 검색...',
+        updateInfo: '✅ 정리된 이미지와 새로운 메뉴로 업데이트된 최신 메뉴입니다',
+        totalLabel: '총 메뉴',
+        categoryLabel: '카테고리',
+        minLabel: '최저가',
+        maxLabel: '최고가',
+        allTab: '전체',
+        loading: '메뉴를 불러오는 중...'
+      },
+      en: {
+        title: 'Bacha Coffee Menu',
+        langButton: '한국어',
+        searchPlaceholder: 'Search menu...',
+        updateInfo: '✅ Latest menu updated with organized images and new dishes',
+        totalLabel: 'Total Items',
+        categoryLabel: 'Categories',
+        minLabel: 'Min Price',
+        maxLabel: 'Max Price',
+        allTab: 'All',
+        loading: 'Loading menu...'
+      }
+    };
+
+    function parseMenu(menuText) {
+      const lines = menuText.split('\n').filter(line => 
+        line.trim() && !line.startsWith('#')
+      );
+      
+      return lines.map(line => {
+        const [category, name, description, price, image, tags] = line.split('|');
+        return {
+          category: category?.trim(),
+          name: name?.trim(),
+          description: description?.trim(),
+          price: parseInt(price?.trim()) || 0,
+          image: image?.trim(),
+          tags: tags?.trim()?.split(',').map(t => t.trim()) || []
+        };
+      }).filter(item => item.category && item.name);
+    }
+
+    function updateUI() {
+      const ui = uiText[currentLanguage];
+      const currentData = currentLanguage === 'ko' ? menuDataKo : menuDataEn;
+      
+      // 제목 및 버튼 업데이트
+      document.getElementById('pageTitle').textContent = ui.title;
+      document.getElementById('mainTitle').textContent = ui.title;
+      document.getElementById('langToggle').textContent = ui.langButton;
+      document.getElementById('searchInput').placeholder = ui.searchPlaceholder;
+     
+      // 탭 업데이트
+      updateTabs();
+      
+      // 메뉴 표시
+      displayMenu();
+    }
+
+    function updateTabs() {
+      const ui = uiText[currentLanguage];
+      const currentData = currentLanguage === 'ko' ? menuDataKo : menuDataEn;
+      const categories = [...new Set(currentData.map(item => item.category))];
+      
+      const filterTabs = document.getElementById('filterTabs');
+      filterTabs.innerHTML = `<button class="tab active" data-category="all">${ui.allTab}</button>` +
+        categories.map(cat => `<button class="tab" data-category="${cat}">${cat}</button>`).join('');
+      
+      // 탭 이벤트 재등록
+      filterTabs.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          filterTabs.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentCategory = tab.dataset.category;
+          filterMenu();
+        });
+      });
+    }
+
+    function displayMenu() {
+      const currentData = currentLanguage === 'ko' ? menuDataKo : menuDataEn;
+      const menuGrid = document.getElementById('menuGrid');
+      
+      menuGrid.innerHTML = currentData.map(item => `
+        <div class="menu-item" data-category="${item.category}" data-name="${item.name.toLowerCase()}" data-tags="${item.tags.join(' ').toLowerCase()}">
+          <img src="images/${item.image}" alt="${item.name}" class="item-image" loading="lazy" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.height='120px'">
+          <div class="item-content">
+            <h3 class="item-name">${item.name}</h3>
+            <p class="item-description">${item.description}</p>
+            <div class="item-footer">
+              <span class="item-price">${item.price.toLocaleString()}원</span>
+              <span class="item-category">${item.category}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      filterMenu();
+    }
+
+    function filterMenu() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const items = document.getElementById('menuGrid').querySelectorAll('.menu-item');
+      
+      items.forEach(item => {
+        const matchesCategory = currentCategory === 'all' || item.dataset.category === currentCategory;
+        const matchesSearch = searchTerm === '' || 
+          item.dataset.name.includes(searchTerm) || 
+          item.dataset.tags.includes(searchTerm);
+        
+        item.style.display = matchesCategory && matchesSearch ? 'block' : 'none';
+      });
+    }
+
+    function toggleLanguage() {
+      currentLanguage = currentLanguage === 'ko' ? 'en' : 'ko';
+      currentCategory = 'all';
+      updateUI();
+    }
+
+    // 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+      menuDataKo = parseMenu(menuTextKo);
+      menuDataEn = parseMenu(menuTextEn);
+      
+      console.log('로드된 메뉴 수:', menuDataKo.length);
+      console.log('첫 번째 메뉴:', menuDataKo[0]?.name);
+      
+      updateUI();
+      
+      // 검색 이벤트
+      document.getElementById('searchInput').addEventListener('input', filterMenu);
+    });
+  </script>
+</body>
+</html>

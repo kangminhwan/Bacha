@@ -1,0 +1,15 @@
+📁 Main (메인 요리)
+
+이 폴더에 넣을 이미지:
+- 파스타
+- 리조또
+- 스테이크
+- 치킨 요리
+- 피쉬 앤 칩스
+
+파일명 예시:
+- pasta-carbonara.jpg
+- risotto-mushroom.jpg
+- steak-ribeye.jpg
+- chicken-teriyaki.jpg
+- fish-and-chips.jpg

@@ -1,0 +1,55 @@
+# Bacha Coffee Menu Management File (English)
+# Format: Category|Name|Description|Price|ImageFile|Tags(Optional)
+# Comments start with #
+
+# === Housemade Pastries ===
+Housemade Pastries|Raspberry Vanilla Entremets|Harmonious French dessert with raspberry and vanilla|12000|housemade-pastries/바샤청담_라즈베리바닐라앙트르메.jpg|raspberry,vanilla,french
+Housemade Pastries|Lemon Tart|Refreshing lemon with crispy tart combination|9800|housemade-pastries/바샤청담_레몬타르트.jpg|lemon,tart
+Housemade Pastries|Mille-feuille|Classic dessert with layers of crispy puff pastry|11500|housemade-pastries/바샤청담_밀푀유.jpg|mille-feuille,puff pastry
+Housemade Pastries|Black Pearl Coffee Opera|Opera cake with rich coffee flavor|13800|housemade-pastries/바샤청담_블랙펄커피오페라.jpg|coffee,opera cake
+Housemade Pastries|Sachertorte|Traditional Austrian chocolate cake|12500|housemade-pastries/바샤청담_자허토르테.jpg|chocolate,sachertorte
+Housemade Pastries|Kivila Rain Entremets|Fantastic combination of Kivila coffee and rain|14000|housemade-pastries/바샤청담_키비라레인앙트르메.jpg|kivila,rain,entremets
+
+# === Sandwich ===
+Sandwich|Bacha Club Sandwich|Bacha Coffee signature club sandwich|15000|sandwich/바샤청담_바샤클럽샌드위치.jpg|club sandwich,signature
+Sandwich|Chicken French Toast Sandwich|Soft French toast with chicken combination|16500|sandwich/바샤청담_치킨프렌치토스트샌드위치.jpg|chicken,french toast
+Sandwich|Korean Beef Sirloin French Toast Sandwich|Premium Korean beef sirloin with French toast|28000|sandwich/바샤청담_한우채끝프렌치토스트샌드위치.jpg|korean beef,sirloin,french toast,premium
+
+# === Ice Desserts ===
+Ice Desserts|Sorbet Ice Cream|Cool and refreshing handmade sorbet|10000|ice-desserts/바샤청담_소르베아이스크림.jpg|sorbet,ice cream
+
+# === Farm Fresh Eggs ===
+Farm Fresh Eggs|Scrambled Eggs with Black Truffle|Premium scrambled eggs topped with black truffle|32000|farm-fresh-eggs/바샤청담_스크램블에그와블랙트러플.jpg|scrambled eggs,black truffle,premium
+Farm Fresh Eggs|Fried Eggs with Homemade Beef Confit|Farm-fresh eggs with carefully prepared beef confit|28000|farm-fresh-eggs/바샤청담_에그프라이와홈메이드비프콩피.jpg|eggs,beef confit,premium
+Farm Fresh Eggs|French-style Omelet|Authentic French-style fluffy omelet|18000|farm-fresh-eggs/바샤청담_프랑스식오믈렛.jpg|omelet,french style
+
+# === Main ===
+Main|Moroccan Kefta Meatballs|Traditional Moroccan spiced meatballs|22000|main/바샤청담_모로칸케프타미트볼.jpg|moroccan,meatballs,spices
+Main|Za'atar Crusted Salmon|Salmon grilled with Middle Eastern za'atar spices|26000|main/바샤청담_자타르크러스트연어.jpg|salmon,zaatar,crusted
+Main|Abalone Risotto|Creamy risotto with fresh abalone|28000|main/바샤청담_전복리조또.jpg|abalone,risotto,premium
+Main|Chicken Tagliatelle|Tender chicken with tagliatelle pasta|19500|main/바샤청담_치킨탈리아텔레.jpg|chicken,tagliatelle,pasta
+Main|Korean Beef Tenderloin|Premium Korean beef tenderloin steak|45000|main/바샤청담_한우안심.jpg|korean beef,tenderloin,steak,premium
+
+# === Croissants and Cakes ===
+Croissants and Cakes|Raspberry Cinnamon Croissant|Sweet combination of raspberry and cinnamon|8500|croissants-and-cakes/바샤청담_라즈베리시나몬크루아상.jpg|croissant,raspberry,cinnamon
+Croissants and Cakes|Lemon Cake|Cake filled with refreshing lemon flavor|9500|croissants-and-cakes/바샤청담_레몬케이크.jpg|cake,lemon
+Croissants and Cakes|Marble Cake|Marble pattern cake with coffee and vanilla|9900|croissants-and-cakes/바샤청담_마블케이크.jpg|cake,marble,coffee
+Croissants and Cakes|Butter Croissant|Authentic croissant filled with golden butter|5200|croissants-and-cakes/바샤청담_버터크루아상.jpg|croissant,butter
+Croissants and Cakes|Brioche Feuilletée|Traditional French brioche|7500|croissants-and-cakes/바샤청담_브리오쉬페이테.jpg|brioche,french
+Croissants and Cakes|Salted Caramel Croissant|Sweet and salty salted caramel croissant|8800|croissants-and-cakes/바샤청담_솔티드캐러멜크루아상.jpg|croissant,salted caramel
+Croissants and Cakes|Almond Croissant|Croissant filled with plenty of savory almonds|7800|croissants-and-cakes/바샤청담_아몬드크루아상.jpg|croissant,almond
+Croissants and Cakes|Chocolate Croissant|Croissant with rich chocolate|7200|croissants-and-cakes/바샤청담_초코크루아상.jpg|croissant,chocolate
+Croissants and Cakes|Chocolate Pistachio Cake|Luxurious combination of chocolate and pistachio|14500|croissants-and-cakes/바샤청담_초콜렛피스타치오케이크.jpg|cake,chocolate,pistachio
+Croissants and Cakes|Café Latin Chocolate Kivila Rain Coffee|Fantastic combination of rich coffee and chocolate|12000|croissants-and-cakes/바샤청담_카페라틴초콜렛키비라레인커피.jpg|coffee,chocolate,kivila
+Croissants and Cakes|Croissant with Comté Cheese|Combination of premium Comté cheese and croissant|12500|croissants-and-cakes/바샤청담_크루아상콩테치즈.jpg|croissant,comte cheese
+Croissants and Cakes|Croissant with Truffle Mushroom|Premium croissant with truffle mushroom|15000|croissants-and-cakes/바샤청담_크루아상트러플버섯.jpg|croissant,truffle,mushroom,premium
+Croissants and Cakes|Pistachio Croissant|Croissant with premium pistachio|9200|croissants-and-cakes/바샤청담_피스타치오크루아상.jpg|croissant,pistachio
+
+# === Salad ===
+Salad|Bacha Niçoise Salad|French salad with tuna, olives, and boiled eggs|24000|salad/바샤청담_니스식바샤샐러드.jpg|salad,nicoise,tuna,french
+Salad|Marrakech Spice Chicken Salad|Chicken salad seasoned with Moroccan spices|19500|salad/바샤청담_마라케시스파이스치킨샐러드.jpg|salad,chicken,marrakech,spices
+
+# === Our Signature Dessert ===
+Our Signature Dessert|Bread and Butter Pudding|Warm bread pudding with butter combination|11500|signature-dessert/바샤청담_브래드와버터푸딩.jpg|bread pudding,butter,signature
+Our Signature Dessert|Tiramisu|Special tiramisu made with Bacha Coffee's unique recipe|13500|signature-dessert/바샤청담_티라미수.jpg|tiramisu,signature
+Our Signature Dessert|Homemade Churros|Freshly fried crispy homemade churros|9800|signature-dessert/바샤청담_홈메이드추로스.jpg|churros,homemade,signature
