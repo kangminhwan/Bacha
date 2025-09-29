@@ -86,6 +86,7 @@
         </div>
         <div class="actions">
           <input type="text" class="search" placeholder="메뉴 검색..." id="searchInput">
+          <button id="forceRefresh" class="btn" data-tip="강력 새로고침 (캐시 삭제)"><span>🔄</span><span>새로고침</span></button>
           <button id="toggleTheme" class="btn toggle" data-tip="라이트/다크 전환"><span>🌓</span><span>테마</span></button>
           <button class="lang-toggle" id="langToggle" onclick="toggleLanguage()">English</button>
         </div>
@@ -379,6 +380,41 @@ Our Signature Dessert|Homemade Churros|Freshly fried crispy homemade churros|980
       applyTheme();
     }
 
+    // 강력 새로고침 기능
+    function forceRefresh() {
+      // 버튼 애니메이션
+      const btn = document.getElementById('forceRefresh');
+      const icon = btn.querySelector('span');
+      icon.style.animation = 'spin 1s linear';
+      
+      // 캐시 삭제 및 새로고침
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) caches.delete(name);
+        });
+      }
+      
+      // 로컬스토리지에서 캐시 관련 데이터 삭제 (테마 설정은 유지)
+      const theme = localStorage.getItem('theme');
+      localStorage.clear();
+      if (theme) localStorage.setItem('theme', theme);
+      
+      // 강력 새로고침 (캐시 무시)
+      setTimeout(() => {
+        window.location.reload(true);
+      }, 500);
+    }
+
+    // 회전 애니메이션 CSS 추가
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+
     // 이미지 모달 관련 함수들
     function openImageModal(imageSrc, title, description) {
       const modal = document.getElementById('imageModal');
@@ -428,6 +464,9 @@ Our Signature Dessert|Homemade Churros|Freshly fried crispy homemade churros|980
       
       // 테마 초기화
       initTheme();
+      
+      // 강력 새로고침 버튼 이벤트
+      document.getElementById('forceRefresh').addEventListener('click', forceRefresh);
       
       updateUI();
       
