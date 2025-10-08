@@ -42,6 +42,30 @@
     .btn:focus-visible{outline:none; box-shadow: var(--ring)}
     .toggle{display:inline-flex; align-items:center; gap:8px}
     .light{--bg:#f4f6fb; --card:#fff; --muted:#5a6577; --text:#0b0c0f; --brand:#e18f00; --brand-2:#e85d3f; --ring:0 0 0 3px rgba(225,143,0,.20); --shadow:0 10px 25px rgba(0,0,0,.08)}
+    /* ✅ 라이트 모드에서 메뉴 글씨/탭 글씨 명확히 보이도록 추가 */
+    .light .tab{
+      background: var(--card);
+      color: #222;
+      border: 1px solid rgba(0,0,0,.1);
+    }
+
+    .light .tab.active{
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+
+    .light .menu-item{
+      background: var(--card);
+      border: 1px solid rgba(0,0,0,.08);
+      color: var(--text);
+    }
+
+    .light .menu-item .item-name,
+    .light .menu-item .item-desc,
+    .light .menu-item .item-price {
+      color: var(--text);
+    }
     .filter-tabs{display:flex; gap:8px; margin:16px 0; flex-wrap:wrap}
     .tab{padding:8px 16px; border:1px solid rgba(255,255,255,.1); border-radius:20px; background:var(--card); color:white; cursor:pointer; transition:all .2s}
     .tab.active{background:var(--brand); color:var(--bg)}
