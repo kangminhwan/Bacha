@@ -546,7 +546,8 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
       modalImages = [];
       currentImageIndex = 0;
     }
- // ===== 모바일 제스처(스와이프) 지원 추가 =====
+
+    // ===== 모바일 제스처(스와이프) 지원 추가 =====
     document.addEventListener('DOMContentLoaded', function() {
       const modal = document.getElementById('imageModal');
       let startX = 0;
@@ -563,11 +564,12 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
       modal.addEventListener('touchend', () => {
         const diffX = startX - endX;
         if (Math.abs(diffX) > 50) {
-          if (diffX > 0) nextImage(); // 왼쪽 스와이프 → 다음 이미지
-          else prevImage(); // 오른쪽 스와이프 → 이전 이미지
+          if (diffX > 0) nextImage();
+          else prevImage();
         }
       });
     });
+
 
     // 모달 배경 클릭 시 닫기 (이미지나 버튼 클릭은 무시)
     document.addEventListener('DOMContentLoaded', function() {
