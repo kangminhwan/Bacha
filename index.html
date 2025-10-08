@@ -75,17 +75,38 @@
       border:1px solid rgba(255,255,255,.08); border-radius:18px; box-shadow: var(--shadow); overflow:hidden; display:flex; flex-direction:column; transition:transform .2s
     }
     .menu-item:hover{transform:translateY(-2px)}
-    .item-image{height:260px; background:#0e1118 center/cover no-repeat; cursor:pointer; transition:transform .2s}
-    .item-image:hover{transform:scale(1.05)}
+    .item-image{height:260px; background:#0e1118 center/cover no-repeat; cursor:pointer; transition:transform .2s; position:relative}
+    .item-image:hover{transform:scale(1.03)}
+    .multi-indicator{
+      position:absolute; right:12px; bottom:12px; background:rgba(0,0,0,.45); color:white; padding:6px 10px; border-radius:999px; font-size:12px;
+      backdrop-filter: blur(4px);
+    }
     
     /* 이미지 모달 스타일 */
     .image-modal{position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.9); z-index:1000; display:none; align-items:center; justify-content:center; cursor:pointer}
-    .modal-image{max-width:90%; max-height:90%; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.5)}
+    .modal-image{max-width:90%; max-height:80%; border-radius:8px; box-shadow:0 20px 60px rgba(0,0,0,.5)}
     .modal-close{position:absolute; top:20px; right:30px; color:white; font-size:40px; font-weight:bold; cursor:pointer; transition:color .2s}
     .modal-close:hover{color:var(--brand)}
     .modal-info{position:absolute; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.8); color:white; padding:12px 20px; border-radius:8px; text-align:center; max-width:90%}
     .modal-title{font-size:18px; font-weight:600; margin-bottom:4px}
     .modal-description{font-size:14px; opacity:.8}
+    .modal-counter{font-size:13px; opacity:0.9; margin-top:6px}
+    .modal-prev, .modal-next {
+      position: absolute;
+      top: 50%;
+      font-size: 48px;
+      color: white;
+      cursor: pointer;
+      padding: 8px 16px;
+      user-select: none;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+    }
+    .modal-prev { left: 28px; }
+    .modal-next { right: 28px; }
+    .modal-prev:hover, .modal-next:hover { color: var(--brand); background: rgba(255,255,255,0.04); }
+
     .item-content{padding:16px}
     .item-name{font-size:16px; font-weight:600; margin-bottom:8px}
     .item-description{color:var(--muted); font-size:14px; margin-bottom:12px; line-height:1.4}
@@ -98,6 +119,10 @@
     .stat-label{color:var(--muted); font-size:14px; margin-top:4px}
     .update-info{background:var(--success); color:white; padding:12px; border-radius:8px; margin:16px 0; text-align:center}
     .loading{text-align:center; padding:40px; color:var(--muted)}
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -128,12 +153,15 @@
     </main>
   </div>
   <!-- 이미지 모달 -->
-  <div class="image-modal" id="imageModal">
+  <div class="image-modal" id="imageModal" aria-hidden="true">
     <div class="modal-close" onclick="closeImageModal()">&times;</div>
+    <div class="modal-prev" onclick="prevImage()" role="button" aria-label="Previous image">&#10094;</div>
     <img class="modal-image" id="modalImage" src="" alt="">
+    <div class="modal-next" onclick="nextImage()" role="button" aria-label="Next image">&#10095;</div>
     <div class="modal-info" id="modalInfo">
       <div class="modal-title" id="modalTitle"></div>
       <div class="modal-description" id="modalDescription"></div>
+      <div class="modal-counter" id="modalCounter"></div>
     </div>
   </div>
 
@@ -143,13 +171,13 @@
     let menuDataEn = [];
     let currentCategory = 'all';
 
-    // 메뉴 데이터 (한국어)
+    // 메뉴 데이터 (한국어) - 이미지 칸에 여러 파일을 쉼표(,)로 구분해서 넣을 수 있습니다.
     const menuTextKo = `# 바샤커피 메뉴 관리 파일
-# 형식: 카테고리|이름|설명|가격|이미지파일명|태그(옵션)
+# 형식: 카테고리|이름|설명|가격|이미지파일명(콤마로 구분 가능)|태그(옵션)
 # 주석은 #으로 시작
 
 # === 월간 메뉴 ===
-월간 메뉴|월간 세트 메뉴|10월 한정메뉴|89000|Monthly Menu/월간메뉴2.jpg|10월,한정메뉴
+월간 메뉴|월간 세트 메뉴|10월 한정|89000|Monthly Menu/월간메뉴1.jfif,Monthly Menu/월간메뉴2.jpg|10월,한정메뉴
 
 # === 하우스 페스추리 ===
 하우스 페스추리|라즈베리 바닐라 앙트르메|라즈베리 무스를 사용한 정통 앙트르메|12000|housemade-pastries/바샤청담_라즈베리바닐라앙트르메.jpg|라즈베리,바닐라,프렌치
@@ -204,14 +232,14 @@
 바샤 시그니처 디저트|브래드와 버터 푸딩|프랑스식 커스타드와 크루아상으로 만든 브레드 푸딩|18000|signature-dessert/바샤청담_브래드와버터푸딩.jpg|브래드푸딩,커스타드,시그니처
 바샤 시그니처 디저트|티라미수|아마레티와 커피 젤리가 들어간 마스카포네 티라미수|16000|signature-dessert/바샤청담_티라미수.jpg|티라미수,시그니처
 바샤 시그니처 디저트|홈메이드 추로스|직접 만든 레몬 도우 추로스와 수제 초콜릿 소스|12000|signature-dessert/바샤청담_홈메이드추로스.jpg|추로스,홈메이드,시그니처`;
-
-    // 메뉴 데이터 (영어)
+   
+ // 메뉴 데이터 (영어) - 동일하게 이미지 칸에 여러 파일을 넣을 수 있습니다.
     const menuTextEn = `# Bacha Coffee Menu Management File (English)
-# Format: Category|Name|Description|Price|ImageFile|Tags(Optional)
+# Format: Category|Name|Description|Price|ImageFile(s) (comma separated)|Tags(Optional)
 # Comments start with #
 
 # === Monthly Menu ===
-Monthly Menu|Monthly Set|Oct Limited|89000|Monthly Menu/월간메뉴2.jpg|Oct,Limited menu
+Monthly Menu|Monthly Set|Oct Limited|89000|Monthly Menu/월간메뉴1.jfif,Monthly Menu/월간메뉴2.jpg|Oct,Limited menu
 
 # === Housemade Pastries ===
 Housemade Pastries|Raspberry Vanilla Entremets|Mascarpone cream, raspberry cream, vanila ganache|12000|housemade-pastries/바샤청담_라즈베리바닐라앙트르메.jpg|raspberry,vanilla,french
@@ -292,19 +320,21 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
       }
     };
 
+    // 파서: 이미지 칸에서 여러 파일명을 처리하도록 수정 (쉼표로 구분)
     function parseMenu(menuText) {
-      const lines = menuText.split('\n').filter(line => 
-        line.trim() && !line.startsWith('#')
+      const lines = menuText.split('\n').filter(line =>
+        line.trim() && !line.trim().startsWith('#')
       );
-      
+
       return lines.map(line => {
-        const [category, name, description, price, image, tags] = line.split('|');
+        const [category, name, description, price, imageField = '', tags] = line.split('|');
+        const images = (imageField || '').split(',').map(s => s.trim()).filter(Boolean);
         return {
           category: category?.trim(),
           name: name?.trim(),
           description: description?.trim(),
           price: parseInt(price?.trim()) || 0,
-          image: image?.trim(),
+          images: images.length ? images : ['placeholder.jpg'], // 이미지 없으면 placeholder
           tags: tags?.trim()?.split(',').map(t => t.trim()) || []
         };
       }).filter(item => item.category && item.name);
@@ -313,16 +343,16 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
     function updateUI() {
       const ui = uiText[currentLanguage];
       const currentData = currentLanguage === 'ko' ? menuDataKo : menuDataEn;
-      
+
       // 제목 및 버튼 업데이트
       document.getElementById('pageTitle').textContent = ui.title;
       document.getElementById('mainTitle').textContent = ui.title;
       document.getElementById('langToggle').textContent = ui.langButton;
       document.getElementById('searchInput').placeholder = ui.searchPlaceholder;
-     
+
       // 탭 업데이트
       updateTabs();
-      
+
       // 메뉴 표시
       displayMenu();
     }
@@ -331,11 +361,11 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
       const ui = uiText[currentLanguage];
       const currentData = currentLanguage === 'ko' ? menuDataKo : menuDataEn;
       const categories = [...new Set(currentData.map(item => item.category))];
-      
+
       const filterTabs = document.getElementById('filterTabs');
       filterTabs.innerHTML = `<button class="tab active" data-category="all">${ui.allTab}</button>` +
         categories.map(cat => `<button class="tab" data-category="${cat}">${cat}</button>`).join('');
-      
+
       // 탭 이벤트 재등록
       filterTabs.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -347,39 +377,75 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
       });
     }
 
+    // 메뉴 그리드 렌더링: DOM 요소를 직접 생성하도록 변경 (안전하고 유연함)
     function displayMenu() {
       const currentData = currentLanguage === 'ko' ? menuDataKo : menuDataEn;
       const menuGrid = document.getElementById('menuGrid');
-      
-      menuGrid.innerHTML = currentData.map(item => `
-        <div class="menu-item" data-category="${item.category}" data-name="${item.name.toLowerCase()}" data-tags="${item.tags.join(' ').toLowerCase()}">
-          <div class="item-image" style="background-image:url('images/${item.image}')" 
-               onclick="openImageModal('images/${item.image}', '${item.name}', '${item.description}')"
-               role="img" aria-label="${item.name}"></div>
-          <div class="item-content">
-            <div class="item-category">${item.category}</div>
-            <h3 class="item-name">${item.name}</h3>
-            <p class="item-description">${item.description}</p>
-            <div class="item-footer">
-              <span class="item-price">₩${item.price.toLocaleString()}</span>
-            </div>
+
+      if (!currentData || !currentData.length) {
+        menuGrid.innerHTML = `<div class="loading">${uiText[currentLanguage].loading}</div>`;
+        return;
+      }
+
+      menuGrid.innerHTML = ''; // 초기화
+
+      currentData.forEach(item => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'menu-item';
+        wrapper.dataset.category = item.category;
+        wrapper.dataset.name = item.name.toLowerCase();
+        wrapper.dataset.tags = (item.tags || []).join(' ').toLowerCase();
+
+        // 대표 이미지(첫 번째)
+        const imageDiv = document.createElement('div');
+        imageDiv.className = 'item-image';
+        imageDiv.style.backgroundImage = `url('images/${item.images[0]}')`;
+
+        // 다중 이미지 표시 인디케이터 (2장 이상이면 표시)
+        if (item.images.length > 1) {
+          const ind = document.createElement('div');
+          ind.className = 'multi-indicator';
+          ind.textContent = `${item.images.length}장`;
+          imageDiv.appendChild(ind);
+        }
+
+        // 클릭하면 이미지 배열을 전달 (경로 앞에 images/ 추가)
+        imageDiv.addEventListener('click', (e) => {
+          openImageModal(item.images.map(p => `images/${p}`), item.name, item.description);
+        });
+        imageDiv.setAttribute('role', 'img');
+        imageDiv.setAttribute('aria-label', item.name);
+
+        // 내용
+        const content = document.createElement('div');
+        content.className = 'item-content';
+        content.innerHTML = `
+          <div class="item-category">${item.category}</div>
+          <h3 class="item-name">${item.name}</h3>
+          <p class="item-description">${item.description}</p>
+          <div class="item-footer">
+            <span class="item-price">₩${item.price.toLocaleString()}</span>
           </div>
-        </div>
-      `).join('');
-      
+        `;
+
+        wrapper.appendChild(imageDiv);
+        wrapper.appendChild(content);
+        menuGrid.appendChild(wrapper);
+      });
+
       filterMenu();
     }
 
     function filterMenu() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       const items = document.getElementById('menuGrid').querySelectorAll('.menu-item');
-      
+
       items.forEach(item => {
         const matchesCategory = currentCategory === 'all' || item.dataset.category === currentCategory;
-        const matchesSearch = searchTerm === '' || 
-          item.dataset.name.includes(searchTerm) || 
+        const matchesSearch = searchTerm === '' ||
+          item.dataset.name.includes(searchTerm) ||
           item.dataset.tags.includes(searchTerm);
-        
+
         item.style.display = matchesCategory && matchesSearch ? 'block' : 'none';
       });
     }
@@ -415,71 +481,87 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
       const btn = document.getElementById('forceRefresh');
       const icon = btn.querySelector('span');
       icon.style.animation = 'spin 1s linear';
-      
+
       // 캐시 삭제 및 새로고침
       if ('caches' in window) {
         caches.keys().then(function(names) {
           for (let name of names) caches.delete(name);
         });
       }
-      
+
       // 로컬스토리지에서 캐시 관련 데이터 삭제 (테마 설정은 유지)
       const theme = localStorage.getItem('theme');
       localStorage.clear();
       if (theme) localStorage.setItem('theme', theme);
-      
+
       // 강력 새로고침 (캐시 무시)
       setTimeout(() => {
         window.location.reload(true);
       }, 500);
     }
 
-    // 회전 애니메이션 CSS 추가
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-    `;
-    document.head.appendChild(style);
+    // 이미지 모달 관련 - 슬라이드 기능 추가
+    let modalImages = [];
+    let currentImageIndex = 0;
 
-    // 이미지 모달 관련 함수들
-    function openImageModal(imageSrc, title, description) {
+    function openImageModal(imagesArray, title, description) {
+      if (!imagesArray || !imagesArray.length) return;
+      modalImages = imagesArray;
+      currentImageIndex = 0;
+      updateModalImage();
+      document.getElementById('modalTitle').textContent = title || '';
+      document.getElementById('modalDescription').textContent = description || '';
+      document.getElementById('modalCounter').textContent = `${currentImageIndex + 1} / ${modalImages.length}`;
       const modal = document.getElementById('imageModal');
-      const modalImage = document.getElementById('modalImage');
-      const modalTitle = document.getElementById('modalTitle');
-      const modalDescription = document.getElementById('modalDescription');
-      
-      modalImage.src = imageSrc;
-      modalImage.alt = title;
-      modalTitle.textContent = title;
-      modalDescription.textContent = description;
-      
       modal.style.display = 'flex';
-      document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function updateModalImage() {
+      const modalImage = document.getElementById('modalImage');
+      modalImage.src = modalImages[currentImageIndex];
+      modalImage.alt = document.getElementById('modalTitle').textContent || '';
+      document.getElementById('modalCounter').textContent = `${currentImageIndex + 1} / ${modalImages.length}`;
+    }
+
+    function nextImage() {
+      if (!modalImages.length) return;
+      currentImageIndex = (currentImageIndex + 1) % modalImages.length;
+      updateModalImage();
+    }
+
+    function prevImage() {
+      if (!modalImages.length) return;
+      currentImageIndex = (currentImageIndex - 1 + modalImages.length) % modalImages.length;
+      updateModalImage();
     }
 
     function closeImageModal() {
       const modal = document.getElementById('imageModal');
       modal.style.display = 'none';
-      document.body.style.overflow = 'auto'; // 스크롤 복원
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = 'auto';
+      // 선택 해제
+      modalImages = [];
+      currentImageIndex = 0;
     }
 
-    // 모달 배경 클릭 시 닫기 및 키보드 이벤트
+    // 모달 배경 클릭 시 닫기 (이미지나 버튼 클릭은 무시)
     document.addEventListener('DOMContentLoaded', function() {
       const modal = document.getElementById('imageModal');
       modal.addEventListener('click', function(e) {
+        // 모달 전체(배경)를 클릭했을 때만 닫기: 이미지나 버튼은 무시
         if (e.target === modal) {
           closeImageModal();
         }
       });
-      
-      // ESC 키로 모달 닫기
+
+      // 키보드 제어
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeImageModal();
-        }
+        if (e.key === 'Escape') closeImageModal();
+        if (e.key === 'ArrowRight') nextImage();
+        if (e.key === 'ArrowLeft') prevImage();
       });
     });
 
@@ -487,18 +569,19 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
     document.addEventListener('DOMContentLoaded', function() {
       menuDataKo = parseMenu(menuTextKo);
       menuDataEn = parseMenu(menuTextEn);
-      
-      console.log('로드된 메뉴 수:', menuDataKo.length);
+
+      console.log('로드된 메뉴 수 (ko):', menuDataKo.length);
+      console.log('로드된 메뉴 수 (en):', menuDataEn.length);
       console.log('첫 번째 메뉴:', menuDataKo[0]?.name);
-      
+
       // 테마 초기화
       initTheme();
-      
+
       // 강력 새로고침 버튼 이벤트
       document.getElementById('forceRefresh').addEventListener('click', forceRefresh);
-      
+
       updateUI();
-      
+
       // 검색 이벤트
       document.getElementById('searchInput').addEventListener('input', filterMenu);
     });
