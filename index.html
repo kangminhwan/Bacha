@@ -28,7 +28,7 @@
     header{position:sticky; top:0; z-index:10; backdrop-filter:saturate(180%) blur(8px);}
     .header-inner{display:flex;gap:16px;align-items:center; justify-content:space-between; padding:16px 24px}
     .brand{display:flex;align-items:center; gap:12px}
-    .logo{width:clamp(60px, 8vw, 120px);height:clamp(60px, 8vw, 120px);border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2)); background-image:url('images/Banner.png'); background-size:cover; background-position:center;}
+    .logo{width:clamp(60px, 8vw, 120px);height:clamp(60px, 8vw, 120px);border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2)); background-image:url('images/Banner3.webp'); background-size:cover; background-position:center;}
     .title{font-size: clamp(20px, 3vw, 48px); font-weight:800;}
     .actions{display:flex; gap:8px; align-items:center}
     .search{padding:8px 12px; border:1px solid rgba(255,255,255,.1); border-radius:8px; background:var(--card); color:var(--text);}
@@ -112,6 +112,7 @@
     .item-description{color:var(--muted); font-size:14px; margin-bottom:12px; line-height:1.4}
     .item-footer{display:flex; justify-content:space-between; align-items:center}
     .item-price{font-weight:700; color:var(--brand); font-size:16px}
+    .item-price .price-separator{color:var(--muted); margin:0 2px; font-weight:500}
     .item-category{display:inline-block; font-size:12px; padding:6px 12px; background:rgba(255,183,3,.12); color:#ffde8a; border:1px solid rgba(255,183,3,.2); border-radius:999px; text-align:center}
     .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin:24px 0}
     .stat-card{background:var(--card); padding:16px; border-radius:8px; text-align:center}
@@ -195,7 +196,7 @@
 샌드위치|한우 채끝 프렌치 토스트 샌드위치|한우 투플러스 채끝과 캐러멜라이즈드 어니언이 들어간 프렌치 토스트|35000|sandwich/바샤청담_한우채끝프렌치토스트샌드위치.jpg|한우,채끝,프렌치토스트,프리미엄
 
 # === 아이스 디저트 ===
-아이스 디저트|소르베 아이스크림|소르베 - 코코넛 / 딸기 , 아이스크림 - 바닐라 / 피스타치오/ 카모심|10000|ice-desserts/바샤청담_소르베아이스크림.jpg|소르베,아이스크림,코코넛,딸기
+아이스 디저트|소르베 아이스크림|소르베 - 코코넛 / 딸기 , 아이스크림 - 바닐라 / 피스타치오/ 카모심|10000/13000|ice-desserts/바샤청담_소르베아이스크림.jpg|소르베,아이스크림,코코넛,딸기
 아이스 디저트|스트로베리 멜바|피스타치오 아이스크림, 레몬 쇼트브레드, 딸기 쿨리|18000|ice-desserts/스트로베리멜바.jpg|스트로베리 멜바
 아이스 디저트|카페 리에주아|카모심 커피 아이스크림, 헤이즐넛 쇼트브레드, 캐러멜로 모닝 커피|19000|ice-desserts/카페리에주아.jpg|카페 리에주아
 
@@ -261,7 +262,7 @@ Sandwich|Chicken French Toast Sandwich|Sous-vide chicken, jalapeño and ched
 Sandwich|Korean Beef Sirloin French Toast Sandwich|Korean beef striploin and caramelized onion|35000|sandwich/바샤청담_한우채끝프렌치토스트샌드위치.jpg|korean beef,sirloin,french toast,premium
 
 # === Ice Desserts ===
-Ice Desserts|Sorbet Ice Cream|Ice Cream - Vanilla / Pistachio / Camocim , Sorbet - Coconut / Strawberry|10000|ice-desserts/바샤청담_소르베아이스크림.jpg|sorbet,ice cream
+Ice Desserts|Sorbet Ice Cream|Ice Cream - Vanilla / Pistachio / Camocim , Sorbet - Coconut / Strawberry|10000/13000|ice-desserts/바샤청담_소르베아이스크림.jpg|sorbet,ice cream
 Ice Desserts|Melba|Pistachio ice cream, raspberry crisps, strawberry coulis|18000|ice-desserts/스트로베리멜바.jpg|sorbet,ice cream
 Ice Desserts|Cafe Liègeois|Camocim coffee ice cream with caramel and hazelnut, caramelo morning|19000|ice-desserts/카페리에주아.jpg|sorbet,ice cream
 # === Farm Fresh Eggs ===
@@ -335,11 +336,34 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
       return lines.map(line => {
         const [category, name, description, price, imageField = '', tags] = line.split('|');
         const images = (imageField || '').split(',').map(s => s.trim()).filter(Boolean);
+        
+        // 가격 처리: 슬래시가 있으면 두 가지 가격, 없으면 단일 가격
+        let priceData;
+        const priceStr = price?.trim() || '0';
+        if (priceStr.includes('/')) {
+          const prices = priceStr.split('/').map(p => parseInt(p.trim()) || 0);
+          priceData = {
+            hasMultiplePrices: true,
+            price1: prices[0] || 0,
+            price2: prices[1] || 0,
+            displayPrice: priceStr  // 표시용 원본 문자열
+          };
+        } else {
+          const singlePrice = parseInt(priceStr) || 0;
+          priceData = {
+            hasMultiplePrices: false,
+            price1: singlePrice,
+            price2: 0,
+            displayPrice: singlePrice.toString()
+          };
+        }
+        
         return {
           category: category?.trim(),
           name: name?.trim(),
           description: description?.trim(),
-          price: parseInt(price?.trim()) || 0,
+          price: priceData.price1, // 기존 호환성을 위해 첫 번째 가격 사용
+          priceData: priceData,    // 새로운 가격 데이터
           images: images.length ? images : ['placeholder.jpg'], // 이미지 없으면 placeholder
           tags: tags?.trim()?.split(',').map(t => t.trim()) || []
         };
@@ -466,12 +490,20 @@ Our Signature Dessert|Homemade Churros|Lemon dough, served with chocolate s
         // 내용
         const content = document.createElement('div');
         content.className = 'item-content';
+        // 가격 표시 로직
+        let priceHtml;
+        if (item.priceData && item.priceData.hasMultiplePrices) {
+          priceHtml = `<span class="item-price">₩${item.priceData.price1.toLocaleString()}<span class="price-separator"> / </span>₩${item.priceData.price2.toLocaleString()}</span>`;
+        } else {
+          priceHtml = `<span class="item-price">₩${item.price.toLocaleString()}</span>`;
+        }
+        
         content.innerHTML = `
           <div class="item-category">${item.category}</div>
           <h3 class="item-name">${item.name}</h3>
           <p class="item-description">${item.description}</p>
           <div class="item-footer">
-            <span class="item-price">₩${item.price.toLocaleString()}</span>
+            ${priceHtml}
           </div>
         `;
 
